@@ -55,7 +55,7 @@ services:
       retries: 3
 
   radar-rest-sources-backend:
-    image: radarbase/radar-rest-source-auth-backend:1.2.1
+    image: radarbase/radar-rest-source-auth-backend:dev
     depends_on:
       - radarbase-postgresql
     networks:
@@ -75,18 +75,27 @@ services:
     volumes:
       - ./etc/rest-source-authorizer/:/app-includes/
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:8080/users"]
+      test: ["CMD", "wget", "--spider", "http://localhost:8080/health"]
       interval: 1m30s
       timeout: 5s
       retries: 3
 
   radar-rest-sources-authorizer:
-      image: radarbase/radar-rest-source-authorizer:1.2.1
+      image: radarbase/radar-rest-source-authorizer:dev
       networks:
         - api
       depends_on:
         - radar-rest-sources-backend
         - radarbase-postgresql
+      environment:
+        BASE_HREF: "/rest-sources/authorizer/"
+        BACKEND_BASE_URL: https://${SERVER_NAME}/rest-sources/backend
+        VALIDATE: "true"
+        AUTH_GRANT_TYPE: "authorization_code"
+        AUTH_CLIENT_ID: "radar_rest_sources_authorizer"
+        AUTH_CLIENT_SECRET: ""
+        AUTH_CALLBACK_URL: https://${SERVER_NAME}/rest-sources/authorizer/login
+        AUTH_URI: https://${SERVER_NAME}/managementportal/oauth
       healthcheck:
         test: ["CMD", "wget", "--spider", "http://localhost:80"]
         interval: 1m30s
